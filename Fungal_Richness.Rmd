@@ -1,0 +1,583 @@
+---
+title: "Meta-Analysis of Fungal Diversity"
+output: html_notebook
+---
+```{r}
+library(tidyverse)
+library(dplyr)
+library(meta)
+library(dmetar)
+```
+Read in raw data. 
+
+##Fungi
+```{r}
+fungi<-read.csv("/Users/gordoncuster/Desktop/Meta_analysis/Wrangled_Data/Fungi_Alpha_Diversity.csv")
+#remove extra rows.
+fungi<- fungi[1:26,]
+#split based on N fixing and and wetlands
+terrestrial_fungi<- fungi %>% dplyr::filter(Ecosystem.Type != "Wetland" & Ecosystem.Type != "Unknown")
+```
+
+##Fungal Shannon diversity
+Full Fungal Dataset. The fixed model is not supported due to the significant heterogenity. We will use the random effect model for the full dataset. This is because the effect size may differ from study to study and all studies do not come from the same population. We can break up the dataset to figure out what might be of interest and when we might use a different model. 
+```{r}
+dat<-fungi
+fungi_wo_na<-dat[-(which(is.na(dat$ShannonXt))),]
+dat<-fungi_wo_na
+
+#Random Effects model for entire fungal datset for Shannon diversity
+mod_adj<-metacont(n.e = dat$Number.OBSt, mean.e = dat$ShannonXt, sd.e = dat$ShannonSDt, n.c = dat$Number.OBSc, mean.c = dat$ShannonXc, sd.c = dat$ShannonSDc, data = dat, sm = "ROM", title = "Fungal Shannon Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = T, level.comb = 0.95)
+
+mod_non_adj<-metacont(n.e = dat$Number.OBSt, mean.e = dat$ShannonXt, sd.e = dat$ShannonSDt, n.c = dat$Number.OBSc, mean.c = dat$ShannonXc, sd.c = dat$ShannonSDc, data = dat, sm = "ROM", title = "Fungal Shannon Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = F, level.comb = 0.95)
+
+#Rerun model and remove outliersfind.outliers(Random_Shannon_Fungi)
+mod_adj_outs<-find.outliers(mod_adj)
+mod_non_adj_outs<-find.outliers(mod_non_adj)
+
+mod_adj_wo_Outliers<-metacont(n.e = dat$Number.OBSt, mean.e = dat$ShannonXt, sd.e = dat$ShannonSDt, n.c = dat$Number.OBSc, mean.c = dat$ShannonXc, sd.c = dat$ShannonSDc, data = dat, sm = "ROM", title = "Fungal Shannon Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = T, level.comb = 0.95, exclude = c(mod_adj_outs$out.study.random))
+summary(mod_adj_wo_Outliers)
+
+mod_non_adj_wo_Outliers <- metacont(n.e = dat$Number.OBSt, mean.e = dat$ShannonXt, sd.e = dat$ShannonSDt, n.c = dat$Number.OBSc, mean.c = dat$ShannonXc, sd.c = dat$ShannonSDc, data = dat, sm = "ROM", title = "Fungal Shannon Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = F, level.comb = 0.95, exclude = c(mod_adj_outs$out.study.random) )
+
+summary(mod_non_adj_wo_Outliers)
+
+see_plots<-InfluenceAnalysis(x = mod_adj_wo_Outliers, random = TRUE, return.separate.plots = T)
+
+#plots funnel plot of symetry to assess publication bias
+funnel(mod_adj_wo_Outliers,xlab = "Hedges' g")
+#tests for assymetry and can be used to determine if there is significant publication bias. 
+eggers.test(x = mod_adj_wo_Outliers)
+
+#only necessary if eggers is signifcant
+#trimfill(mod_adj_wo_Outliers)
+```
+```{r}
+dat<-terrestrial_fungi
+fungi_wo_na<-dat[-(which(is.na(dat$ShannonXt))),]
+dat<-fungi_wo_na
+
+#Random Effects model for entire fungal datset for Shannon diversity
+mod_adj<-metacont(n.e = dat$Number.OBSt, mean.e = dat$ShannonXt, sd.e = dat$ShannonSDt, n.c = dat$Number.OBSc, mean.c = dat$ShannonXc, sd.c = dat$ShannonSDc, data = dat, sm = "ROM", title = "Fungal Shannon Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = T, level.comb = 0.95)
+
+mod_non_adj<-metacont(n.e = dat$Number.OBSt, mean.e = dat$ShannonXt, sd.e = dat$ShannonSDt, n.c = dat$Number.OBSc, mean.c = dat$ShannonXc, sd.c = dat$ShannonSDc, data = dat, sm = "ROM", title = "Fungal Shannon Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = F, level.comb = 0.95)
+
+#Rerun model and remove outliersfind.outliers(Random_Shannon_Fungi)
+mod_adj_outs<-find.outliers(mod_adj)
+mod_non_adj_outs<-find.outliers(mod_non_adj)
+
+mod_adj_wo_Outliers<-metacont(n.e = dat$Number.OBSt, mean.e = dat$ShannonXt, sd.e = dat$ShannonSDt, n.c = dat$Number.OBSc, mean.c = dat$ShannonXc, sd.c = dat$ShannonSDc, data = dat, sm = "ROM", title = "Fungal Shannon Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = T, level.comb = 0.95, exclude = c(mod_adj_outs$out.study.random))
+summary(mod_adj_wo_Outliers)
+
+mod_non_adj_wo_Outliers <- metacont(n.e = dat$Number.OBSt, mean.e = dat$ShannonXt, sd.e = dat$ShannonSDt, n.c = dat$Number.OBSc, mean.c = dat$ShannonXc, sd.c = dat$ShannonSDc, data = dat, sm = "ROM", title = "Fungal Shannon Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = F, level.comb = 0.95, exclude = c(mod_adj_outs$out.study.random) )
+
+summary(mod_non_adj_wo_Outliers)
+
+see_plots<-InfluenceAnalysis(x = mod_adj_wo_Outliers, random = TRUE, return.separate.plots = T)
+
+#plots funnel plot of symetry to assess publication bias
+funnel(mod_adj_wo_Outliers,xlab = "Hedges' g")
+#tests for assymetry and can be used to determine if there is significant publication bias. 
+eggers.test(x = mod_adj_wo_Outliers)
+
+#only necessary if eggers is signifcant
+#trimfill(mod_adj_wo_Outliers)
+```
+
+I removed split the fungi by the method used to assess impact of HTS vs. 'Low resolution' methods. 
+
+```{r}
+summary(subgroup.analysis.mixed.effects(mod_adj_wo_Outliers, subgroups = dat$Methods_Dummy))
+hts_fungi<- terrestrial_fungi %>% dplyr::filter(Methods == "HTS")
+non_hts_fungi <- terrestrial_fungi %>% dplyr::filter(Methods == "Low_Res")
+```
+
+```{r}
+dat<-hts_fungi
+#no na's detected
+#fungi_wo_na<-dat[-(which(is.na(dat$ShannonXt))),]
+#dat<-fungi_wo_na
+
+#Random Effects model for entire fungal datset for Shannon diversity
+mod_adj<-metacont(n.e = dat$Number.OBSt, mean.e = dat$ShannonXt, sd.e = dat$ShannonSDt, n.c = dat$Number.OBSc, mean.c = dat$ShannonXc, sd.c = dat$ShannonSDc, data = dat, sm = "ROM", title = "Fungal Shannon Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = T, level.comb = 0.95)
+
+mod_non_adj<-metacont(n.e = dat$Number.OBSt, mean.e = dat$ShannonXt, sd.e = dat$ShannonSDt, n.c = dat$Number.OBSc, mean.c = dat$ShannonXc, sd.c = dat$ShannonSDc, data = dat, sm = "ROM", title = "Fungal Shannon Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = F, level.comb = 0.95)
+
+#Rerun model and remove outliersfind.outliers(Random_Shannon_Fungi)
+mod_adj_outs<-find.outliers(mod_adj)
+mod_non_adj_outs<-find.outliers(mod_non_adj)
+
+mod_adj_wo_Outliers<-metacont(n.e = dat$Number.OBSt, mean.e = dat$ShannonXt, sd.e = dat$ShannonSDt, n.c = dat$Number.OBSc, mean.c = dat$ShannonXc, sd.c = dat$ShannonSDc, data = dat, sm = "ROM", title = "Fungal Shannon Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = T, level.comb = 0.95, exclude = c(mod_adj_outs$out.study.random))
+summary(mod_adj_wo_Outliers)
+
+mod_non_adj_wo_Outliers<-metacont(n.e = dat$Number.OBSt, mean.e = dat$ShannonXt, sd.e = dat$ShannonSDt, n.c = dat$Number.OBSc, mean.c = dat$ShannonXc, sd.c = dat$ShannonSDc, data = dat, sm = "ROM", title = "Fungal Shannon Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = F, level.comb = 0.95, exclude =c(mod_adj_outs$out.study.random))
+summary(mod_non_adj_wo_Outliers)
+
+see_plots<-InfluenceAnalysis(x = mod_adj_wo_Outliers, random = TRUE, return.separate.plots = T)
+
+#plots funnel plot of symetry to assess publication bias
+funnel(mod_adj_wo_Outliers,xlab = "Hedges' g")
+#tests for assymetry and can be used to determine if there is significant publication bias. 
+eggers.test(x = mod_adj_wo_Outliers)
+
+#only necessary if eggers is signifcant
+#trimfill(mod_adj_wo_Outliers)
+```
+
+Low Resolution methods
+```{r}
+dat<-non_hts_fungi
+which(is.na(dat$ShannonXt))
+fungi_wo_na<-dat[-(which(is.na(dat$ShannonXt))),]
+dat<-fungi_wo_na
+
+#Random Effects model for entire fungal datset for Shannon diversity
+mod_adj<-metacont(n.e = dat$Number.OBSt, mean.e = dat$ShannonXt, sd.e = dat$ShannonSDt, n.c = dat$Number.OBSc, mean.c = dat$ShannonXc, sd.c = dat$ShannonSDc, data = dat, sm = "ROM", title = "Fungal Shannon Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = T, level.comb = 0.95)
+
+mod_non_adj<-metacont(n.e = dat$Number.OBSt, mean.e = dat$ShannonXt, sd.e = dat$ShannonSDt, n.c = dat$Number.OBSc, mean.c = dat$ShannonXc, sd.c = dat$ShannonSDc, data = dat, sm = "ROM", title = "Fungal Shannon Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = F, level.comb = 0.95)
+
+#Rerun model and remove outliersfind.outliers(Random_Shannon_Fungi)
+mod_adj_outs<-find.outliers(mod_adj)
+mod_non_adj_outs<-find.outliers(mod_non_adj)
+
+mod_adj_wo_Outliers<-metacont(n.e = dat$Number.OBSt, mean.e = dat$ShannonXt, sd.e = dat$ShannonSDt, n.c = dat$Number.OBSc, mean.c = dat$ShannonXc, sd.c = dat$ShannonSDc, data = dat, sm = "ROM", title = "Fungal Shannon Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = T, level.comb = 0.95, exclude = c(mod_adj_outs$out.study.random))
+summary(mod_adj_wo_Outliers)
+
+mod_non_adj_wo_Outliers<-metacont(n.e = dat$Number.OBSt, mean.e = dat$ShannonXt, sd.e = dat$ShannonSDt, n.c = dat$Number.OBSc, mean.c = dat$ShannonXc, sd.c = dat$ShannonSDc, data = dat, sm = "ROM", title = "Fungal Shannon Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = F, level.comb = 0.95, exclude =c(mod_adj_outs$out.study.random))
+summary(mod_non_adj_wo_Outliers)
+
+see_plots<-InfluenceAnalysis(x = mod_adj_wo_Outliers, random = TRUE, return.separate.plots = T)
+
+#plots funnel plot of symetry to assess publication bias
+funnel(mod_adj_wo_Outliers,xlab = "Hedges' g")
+#tests for assymetry and can be used to determine if there is significant publication bias. 
+eggers.test(x = mod_adj_wo_Outliers)
+
+#only necessary if eggers is signifcant
+#trimfill(mod_adj_wo_Outliers)
+```
+
+N-fixing terrestrial plants. 
+```{r}
+summary(subgroup.analysis.mixed.effects(mod_adj_wo_Outliers, subgroups = dat$N.Fixing))
+n_fixing_fungi<- terrestrial_fungi %>% dplyr::filter(N.Fixing == "1")
+non_n_fixing_fungi<- terrestrial_fungi %>% dplyr::filter(N.Fixing == "0")
+```
+
+N-fixing terrestrial plants. 
+```{r}
+dat<-n_fixing_fungi
+which(is.na(dat$ShannonXt))
+#fungi_wo_na<-dat[-(which(is.na(dat$ShannonXt))),]
+#dat<-fungi_wo_na
+
+#Random Effects model for entire fungal datset for Shannon diversity
+mod_adj<-metacont(n.e = dat$Number.OBSt, mean.e = dat$ShannonXt, sd.e = dat$ShannonSDt, n.c = dat$Number.OBSc, mean.c = dat$ShannonXc, sd.c = dat$ShannonSDc, data = dat, sm = "ROM", title = "Fungal Shannon Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = T, level.comb = 0.95)
+
+mod_non_adj<-metacont(n.e = dat$Number.OBSt, mean.e = dat$ShannonXt, sd.e = dat$ShannonSDt, n.c = dat$Number.OBSc, mean.c = dat$ShannonXc, sd.c = dat$ShannonSDc, data = dat, sm = "ROM", title = "Fungal Shannon Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = F, level.comb = 0.95)
+
+#Rerun model and remove outliersfind.outliers(Random_Shannon_Fungi)
+mod_adj_outs<-find.outliers(mod_adj)
+mod_non_adj_outs<-find.outliers(mod_non_adj)
+
+mod_adj_wo_Outliers<-metacont(n.e = dat$Number.OBSt, mean.e = dat$ShannonXt, sd.e = dat$ShannonSDt, n.c = dat$Number.OBSc, mean.c = dat$ShannonXc, sd.c = dat$ShannonSDc, data = dat, sm = "ROM", title = "Fungal Shannon Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = T, level.comb = 0.95, exclude = c(mod_adj_outs$out.study.random))
+summary(mod_adj_wo_Outliers)
+
+mod_non_adj_wo_Outliers<-metacont(n.e = dat$Number.OBSt, mean.e = dat$ShannonXt, sd.e = dat$ShannonSDt, n.c = dat$Number.OBSc, mean.c = dat$ShannonXc, sd.c = dat$ShannonSDc, data = dat, sm = "ROM", title = "Fungal Shannon Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = F, level.comb = 0.95, exclude =c(mod_adj_outs$out.study.random))
+summary(mod_non_adj_wo_Outliers)
+
+see_plots<-InfluenceAnalysis(x = mod_adj_wo_Outliers, random = TRUE, return.separate.plots = T)
+
+#plots funnel plot of symetry to assess publication bias
+funnel(mod_adj_wo_Outliers,xlab = "Hedges' g")
+#tests for assymetry and can be used to determine if there is significant publication bias. 
+eggers.test(x = mod_adj_wo_Outliers)
+
+#only necessary if eggers is signifcant
+#trimfill(mod_adj_wo_Outliers)
+```
+
+Non-N-fixing terrestrial plants.
+```{r}
+dat<-non_n_fixing_fungi
+which(is.na(dat$ShannonXt))
+fungi_wo_na<-dat[-(which(is.na(dat$ShannonXt))),]
+dat<-fungi_wo_na
+
+#Random Effects model for entire fungal datset for Shannon diversity
+mod_adj<-metacont(n.e = dat$Number.OBSt, mean.e = dat$ShannonXt, sd.e = dat$ShannonSDt, n.c = dat$Number.OBSc, mean.c = dat$ShannonXc, sd.c = dat$ShannonSDc, data = dat, sm = "ROM", title = "Fungal Shannon Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = T, level.comb = 0.95)
+
+mod_non_adj<-metacont(n.e = dat$Number.OBSt, mean.e = dat$ShannonXt, sd.e = dat$ShannonSDt, n.c = dat$Number.OBSc, mean.c = dat$ShannonXc, sd.c = dat$ShannonSDc, data = dat, sm = "ROM", title = "Fungal Shannon Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = F, level.comb = 0.95)
+
+#Rerun model and remove outliersfind.outliers(Random_Shannon_Fungi)
+mod_adj_outs<-find.outliers(mod_adj)
+mod_non_adj_outs<-find.outliers(mod_non_adj)
+
+mod_adj_wo_Outliers<-metacont(n.e = dat$Number.OBSt, mean.e = dat$ShannonXt, sd.e = dat$ShannonSDt, n.c = dat$Number.OBSc, mean.c = dat$ShannonXc, sd.c = dat$ShannonSDc, data = dat, sm = "ROM", title = "Fungal Shannon Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = T, level.comb = 0.95, exclude = c(mod_adj_outs$out.study.random))
+summary(mod_adj_wo_Outliers)
+
+mod_non_adj_wo_Outliers<-metacont(n.e = dat$Number.OBSt, mean.e = dat$ShannonXt, sd.e = dat$ShannonSDt, n.c = dat$Number.OBSc, mean.c = dat$ShannonXc, sd.c = dat$ShannonSDc, data = dat, sm = "ROM", title = "Fungal Shannon Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = F, level.comb = 0.95, exclude =c(mod_adj_outs$out.study.random))
+summary(mod_non_adj_wo_Outliers)
+
+see_plots<-InfluenceAnalysis(x = mod_adj_wo_Outliers, random = TRUE, return.separate.plots = T)
+
+#plots funnel plot of symetry to assess publication bias
+funnel(mod_adj_wo_Outliers,xlab = "Hedges' g")
+#tests for assymetry and can be used to determine if there is significant publication bias. 
+eggers.test(x = mod_adj_wo_Outliers)
+
+#only necessary if eggers is signifcant
+#trimfill(mod_adj_wo_Outliers)
+```
+
+```{r}
+summary(subgroup.analysis.mixed.effects(mod_adj_wo_Outliers, subgroups = dat$Soil_Dummy))
+rhizo_fungi<- terrestrial_fungi %>% dplyr::filter(Soil_Dummy == 2)
+bulk_fungi<- terrestrial_fungi %>% dplyr::filter(Soil_Dummy == 1)
+```
+
+Rhizosphere soils
+```{r}
+dat<-rhizo_fungi
+which(is.na(dat$ShannonXt))
+#fungi_wo_na<-dat[-(which(is.na(dat$ShannonXt))),]
+#dat<-fungi_wo_na
+
+#Random Effects model for entire fungal datset for Shannon diversity
+mod_adj<-metacont(n.e = dat$Number.OBSt, mean.e = dat$ShannonXt, sd.e = dat$ShannonSDt, n.c = dat$Number.OBSc, mean.c = dat$ShannonXc, sd.c = dat$ShannonSDc, data = dat, sm = "ROM", title = "Fungal Shannon Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = T, level.comb = 0.95)
+
+mod_non_adj<-metacont(n.e = dat$Number.OBSt, mean.e = dat$ShannonXt, sd.e = dat$ShannonSDt, n.c = dat$Number.OBSc, mean.c = dat$ShannonXc, sd.c = dat$ShannonSDc, data = dat, sm = "ROM", title = "Fungal Shannon Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = F, level.comb = 0.95)
+
+#Rerun model and remove outliersfind.outliers(Random_Shannon_Fungi)
+mod_adj_outs<-find.outliers(mod_adj)
+mod_non_adj_outs<-find.outliers(mod_non_adj)
+
+mod_adj_wo_Outliers<-metacont(n.e = dat$Number.OBSt, mean.e = dat$ShannonXt, sd.e = dat$ShannonSDt, n.c = dat$Number.OBSc, mean.c = dat$ShannonXc, sd.c = dat$ShannonSDc, data = dat, sm = "ROM", title = "Fungal Shannon Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = T, level.comb = 0.95, exclude = c(mod_adj_outs$out.study.random))
+summary(mod_adj_wo_Outliers)
+
+mod_non_adj_wo_Outliers<-metacont(n.e = dat$Number.OBSt, mean.e = dat$ShannonXt, sd.e = dat$ShannonSDt, n.c = dat$Number.OBSc, mean.c = dat$ShannonXc, sd.c = dat$ShannonSDc, data = dat, sm = "ROM", title = "Fungal Shannon Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = F, level.comb = 0.95, exclude =c(mod_adj_outs$out.study.random))
+summary(mod_non_adj_wo_Outliers)
+
+see_plots<-InfluenceAnalysis(x = mod_adj_wo_Outliers, random = TRUE, return.separate.plots = T)
+
+#plots funnel plot of symetry to assess publication bias
+funnel(mod_adj_wo_Outliers,xlab = "Hedges' g")
+#tests for assymetry and can be used to determine if there is significant publication bias. 
+eggers.test(x = mod_adj_wo_Outliers)
+
+#only necessary if eggers is signifcant
+#trimfill(mod_adj_wo_Outliers)
+```
+Bulk Soils
+```{r}
+dat<-bulk_fungi
+which(is.na(dat$ShannonXt))
+fungi_wo_na<-dat[-(which(is.na(dat$ShannonXt))),]
+dat<-fungi_wo_na
+
+#Random Effects model for entire fungal datset for Shannon diversity
+mod_adj<-metacont(n.e = dat$Number.OBSt, mean.e = dat$ShannonXt, sd.e = dat$ShannonSDt, n.c = dat$Number.OBSc, mean.c = dat$ShannonXc, sd.c = dat$ShannonSDc, data = dat, sm = "ROM", title = "Fungal Shannon Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = T, level.comb = 0.95)
+
+mod_non_adj<-metacont(n.e = dat$Number.OBSt, mean.e = dat$ShannonXt, sd.e = dat$ShannonSDt, n.c = dat$Number.OBSc, mean.c = dat$ShannonXc, sd.c = dat$ShannonSDc, data = dat, sm = "ROM", title = "Fungal Shannon Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = F, level.comb = 0.95)
+
+#Rerun model and remove outliersfind.outliers(Random_Shannon_Fungi)
+mod_adj_outs<-find.outliers(mod_adj)
+mod_non_adj_outs<-find.outliers(mod_non_adj)
+
+mod_adj_wo_Outliers<-metacont(n.e = dat$Number.OBSt, mean.e = dat$ShannonXt, sd.e = dat$ShannonSDt, n.c = dat$Number.OBSc, mean.c = dat$ShannonXc, sd.c = dat$ShannonSDc, data = dat, sm = "ROM", title = "Fungal Shannon Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = T, level.comb = 0.95, exclude = c(mod_adj_outs$out.study.random))
+summary(mod_adj_wo_Outliers)
+
+mod_non_adj_wo_Outliers<-metacont(n.e = dat$Number.OBSt, mean.e = dat$ShannonXt, sd.e = dat$ShannonSDt, n.c = dat$Number.OBSc, mean.c = dat$ShannonXc, sd.c = dat$ShannonSDc, data = dat, sm = "ROM", title = "Fungal Shannon Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = F, level.comb = 0.95, exclude =c(mod_adj_outs$out.study.random))
+summary(mod_non_adj_wo_Outliers)
+
+see_plots<-InfluenceAnalysis(x = mod_adj_wo_Outliers, random = TRUE, return.separate.plots = T)
+
+#plots funnel plot of symetry to assess publication bias
+funnel(mod_adj_wo_Outliers,xlab = "Hedges' g")
+#tests for assymetry and can be used to determine if there is significant publication bias. 
+eggers.test(x = mod_adj_wo_Outliers)
+
+#only necessary if eggers is signifcant
+#trimfill(mod_adj_wo_Outliers)
+```
+
+##Fungal Richness
+```{r}
+dat<-fungi
+fungi_wo_na<-dat[-(which(is.na(dat$RichnessXt))),]
+dat<-fungi_wo_na
+
+#Random Effects model for entire fungal datset for Richness diversity
+mod_adj<-metacont(n.e = dat$Number.OBSt, mean.e = dat$RichnessXt, sd.e = dat$RichnessSDt, n.c = dat$Number.OBSc, mean.c = dat$RichnessXc, sd.c = dat$RichnessSDc, data = dat, sm = "ROM", title = "Fungal Richness Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = T, level.comb = 0.95)
+
+mod_non_adj<-metacont(n.e = dat$Number.OBSt, mean.e = dat$RichnessXt, sd.e = dat$RichnessSDt, n.c = dat$Number.OBSc, mean.c = dat$RichnessXc, sd.c = dat$RichnessSDc, data = dat, sm = "ROM", title = "Fungal Richness Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = F, level.comb = 0.95)
+
+#Rerun model and remove outliersfind.outliers(Random_Richness_Fungi)
+mod_adj_outs<-find.outliers(mod_adj)
+mod_non_adj_outs<-find.outliers(mod_non_adj)
+
+mod_adj_wo_Outliers<-metacont(n.e = dat$Number.OBSt, mean.e = dat$RichnessXt, sd.e = dat$RichnessSDt, n.c = dat$Number.OBSc, mean.c = dat$RichnessXc, sd.c = dat$RichnessSDc, data = dat, sm = "ROM", title = "Fungal Richness Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = T, comb.random = T, method.tau = "REML", hakn = T, level.comb = 0.95, exclude = c(mod_adj_outs$out.study.random))
+summary(mod_adj_wo_Outliers)
+
+mod_non_adj_wo_Outliers <- metacont(n.e = dat$Number.OBSt, mean.e = dat$RichnessXt, sd.e = dat$RichnessSDt, n.c = dat$Number.OBSc, mean.c = dat$RichnessXc, sd.c = dat$RichnessSDc, data = dat, sm = "ROM", title = "Fungal Richness Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = T, comb.random = T, method.tau = "REML", hakn = F, level.comb = 0.95, exclude = c(mod_adj_outs$out.study.random) )
+
+summary(mod_non_adj_wo_Outliers)
+
+see_plots<-InfluenceAnalysis(x = mod_adj_wo_Outliers, random = TRUE, return.separate.plots = T)
+
+#plots funnel plot of symetry to assess publication bias
+funnel(mod_adj_wo_Outliers,xlab = "Hedges' g")
+#tests for assymetry and can be used to determine if there is significant publication bias. 
+eggers.test(x = mod_adj_wo_Outliers)
+
+#only necessary if eggers is signifcant
+#trimfill(mod_adj_wo_Outliers)
+```
+```{r}
+dat<-terrestrial_fungi
+#fungi_wo_na<-dat[-(which(is.na(dat$RichnessXt))),]
+#dat<-fungi_wo_na
+
+#Random Effects model for entire fungal datset for Richness diversity
+mod_adj<-metacont(n.e = dat$Number.OBSt, mean.e = dat$RichnessXt, sd.e = dat$RichnessSDt, n.c = dat$Number.OBSc, mean.c = dat$RichnessXc, sd.c = dat$RichnessSDc, data = dat, sm = "ROM", title = "Fungal Richness Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = T, level.comb = 0.95)
+
+mod_non_adj<-metacont(n.e = dat$Number.OBSt, mean.e = dat$RichnessXt, sd.e = dat$RichnessSDt, n.c = dat$Number.OBSc, mean.c = dat$RichnessXc, sd.c = dat$RichnessSDc, data = dat, sm = "ROM", title = "Fungal Richness Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = F, level.comb = 0.95)
+
+#Rerun model and remove outliersfind.outliers(Random_Richness_Fungi)
+mod_adj_outs<-find.outliers(mod_adj)
+mod_non_adj_outs<-find.outliers(mod_non_adj)
+
+mod_adj_wo_Outliers<-metacont(n.e = dat$Number.OBSt, mean.e = dat$RichnessXt, sd.e = dat$RichnessSDt, n.c = dat$Number.OBSc, mean.c = dat$RichnessXc, sd.c = dat$RichnessSDc, data = dat, sm = "ROM", title = "Fungal Richness Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = T, comb.random = T, method.tau = "REML", hakn = T, level.comb = 0.95, exclude = c(mod_adj_outs$out.study.random))
+summary(mod_adj_wo_Outliers)
+
+mod_non_adj_wo_Outliers <- metacont(n.e = dat$Number.OBSt, mean.e = dat$RichnessXt, sd.e = dat$RichnessSDt, n.c = dat$Number.OBSc, mean.c = dat$RichnessXc, sd.c = dat$RichnessSDc, data = dat, sm = "ROM", title = "Fungal Richness Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = T, comb.random = T, method.tau = "REML", hakn = F, level.comb = 0.95, exclude = c(mod_adj_outs$out.study.random) )
+
+summary(mod_non_adj_wo_Outliers)
+
+see_plots<-InfluenceAnalysis(x = mod_adj_wo_Outliers, random = TRUE, return.separate.plots = T)
+
+#plots funnel plot of symetry to assess publication bias
+funnel(mod_adj_wo_Outliers,xlab = "Hedges' g")
+#tests for assymetry and can be used to determine if there is significant publication bias. 
+eggers.test(x = mod_adj_wo_Outliers)
+
+#only necessary if eggers is signifcant
+#trimfill(mod_adj_wo_Outliers)
+```
+
+I removed split the fungi by the method used to assess impact of HTS vs. 'Low resolution' methods. 
+
+```{r}
+summary(subgroup.analysis.mixed.effects(mod_adj_wo_Outliers, subgroups = dat$Methods_Dummy))
+hts_fungi<- terrestrial_fungi %>% dplyr::filter(Methods == "HTS")
+non_hts_fungi <- terrestrial_fungi %>% dplyr::filter(Methods == "Low_Res")
+```
+
+```{r}
+dat<-hts_fungi
+#no na's detected
+#fungi_wo_na<-dat[-(which(is.na(dat$RichnessXt))),]
+#dat<-fungi_wo_na
+
+#Random Effects model for entire fungal datset for Richness diversity
+mod_adj<-metacont(n.e = dat$Number.OBSt, mean.e = dat$RichnessXt, sd.e = dat$RichnessSDt, n.c = dat$Number.OBSc, mean.c = dat$RichnessXc, sd.c = dat$RichnessSDc, data = dat, sm = "ROM", title = "Fungal Richness Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = T, level.comb = 0.95)
+
+mod_non_adj<-metacont(n.e = dat$Number.OBSt, mean.e = dat$RichnessXt, sd.e = dat$RichnessSDt, n.c = dat$Number.OBSc, mean.c = dat$RichnessXc, sd.c = dat$RichnessSDc, data = dat, sm = "ROM", title = "Fungal Richness Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = F, level.comb = 0.95)
+
+#Rerun model and remove outliersfind.outliers(Random_Richness_Fungi)
+mod_adj_outs<-find.outliers(mod_adj)
+mod_non_adj_outs<-find.outliers(mod_non_adj)
+
+mod_adj_wo_Outliers<-metacont(n.e = dat$Number.OBSt, mean.e = dat$RichnessXt, sd.e = dat$RichnessSDt, n.c = dat$Number.OBSc, mean.c = dat$RichnessXc, sd.c = dat$RichnessSDc, data = dat, sm = "ROM", title = "Fungal Richness Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = T, level.comb = 0.95, exclude = c(mod_adj_outs$out.study.random))
+summary(mod_adj_wo_Outliers)
+
+mod_non_adj_wo_Outliers<-metacont(n.e = dat$Number.OBSt, mean.e = dat$RichnessXt, sd.e = dat$RichnessSDt, n.c = dat$Number.OBSc, mean.c = dat$RichnessXc, sd.c = dat$RichnessSDc, data = dat, sm = "ROM", title = "Fungal Richness Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = F, level.comb = 0.95, exclude =c(mod_adj_outs$out.study.random))
+summary(mod_non_adj_wo_Outliers)
+
+see_plots<-InfluenceAnalysis(x = mod_adj_wo_Outliers, random = TRUE, return.separate.plots = T)
+
+#plots funnel plot of symetry to assess publication bias
+funnel(mod_adj_wo_Outliers,xlab = "Hedges' g")
+#tests for assymetry and can be used to determine if there is significant publication bias. 
+eggers.test(x = mod_adj_wo_Outliers)
+
+#only necessary if eggers is signifcant
+#trimfill(mod_adj_wo_Outliers)
+```
+
+Low Resolution methods
+```{r}
+dat<-non_hts_fungi
+which(is.na(dat$RichnessXt))
+#fungi_wo_na<-dat[-(which(is.na(dat$RichnessXt))),]
+#dat<-fungi_wo_na
+
+#Random Effects model for entire fungal datset for Richness diversity
+mod_adj<-metacont(n.e = dat$Number.OBSt, mean.e = dat$RichnessXt, sd.e = dat$RichnessSDt, n.c = dat$Number.OBSc, mean.c = dat$RichnessXc, sd.c = dat$RichnessSDc, data = dat, sm = "ROM", title = "Fungal Richness Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = T, level.comb = 0.95)
+
+mod_non_adj<-metacont(n.e = dat$Number.OBSt, mean.e = dat$RichnessXt, sd.e = dat$RichnessSDt, n.c = dat$Number.OBSc, mean.c = dat$RichnessXc, sd.c = dat$RichnessSDc, data = dat, sm = "ROM", title = "Fungal Richness Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = F, level.comb = 0.95)
+
+#Rerun model and remove outliersfind.outliers(Random_Richness_Fungi)
+mod_adj_outs<-find.outliers(mod_adj)
+mod_non_adj_outs<-find.outliers(mod_non_adj)
+
+mod_adj_wo_Outliers<-metacont(n.e = dat$Number.OBSt, mean.e = dat$RichnessXt, sd.e = dat$RichnessSDt, n.c = dat$Number.OBSc, mean.c = dat$RichnessXc, sd.c = dat$RichnessSDc, data = dat, sm = "ROM", title = "Fungal Richness Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = T, level.comb = 0.95, exclude = c(mod_adj_outs$out.study.random))
+summary(mod_adj_wo_Outliers)
+
+mod_non_adj_wo_Outliers<-metacont(n.e = dat$Number.OBSt, mean.e = dat$RichnessXt, sd.e = dat$RichnessSDt, n.c = dat$Number.OBSc, mean.c = dat$RichnessXc, sd.c = dat$RichnessSDc, data = dat, sm = "ROM", title = "Fungal Richness Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = F, level.comb = 0.95, exclude =c(mod_adj_outs$out.study.random))
+summary(mod_non_adj_wo_Outliers)
+
+see_plots<-InfluenceAnalysis(x = mod_adj_wo_Outliers, random = TRUE, return.separate.plots = T)
+
+#plots funnel plot of symetry to assess publication bias
+funnel(mod_adj_wo_Outliers,xlab = "Hedges' g")
+#tests for assymetry and can be used to determine if there is significant publication bias. 
+eggers.test(x = mod_adj_wo_Outliers)
+
+#only necessary if eggers is signifcant
+#trimfill(mod_adj_wo_Outliers)
+```
+
+N-fixing terrestrial plants. 
+```{r}
+summary(subgroup.analysis.mixed.effects(mod_adj_wo_Outliers, subgroups = dat$N.Fixing))
+n_fixing_fungi<- terrestrial_fungi %>% dplyr::filter(N.Fixing == "1")
+non_n_fixing_fungi<- terrestrial_fungi %>% dplyr::filter(N.Fixing == "0")
+```
+
+N-fixing terrestrial plants. 
+```{r}
+dat<-n_fixing_fungi
+which(is.na(dat$RichnessXt))
+#fungi_wo_na<-dat[-(which(is.na(dat$RichnessXt))),]
+#dat<-fungi_wo_na
+
+#Random Effects model for entire fungal datset for Richness diversity
+mod_adj<-metacont(n.e = dat$Number.OBSt, mean.e = dat$RichnessXt, sd.e = dat$RichnessSDt, n.c = dat$Number.OBSc, mean.c = dat$RichnessXc, sd.c = dat$RichnessSDc, data = dat, sm = "ROM", title = "Fungal Richness Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = T, level.comb = 0.95)
+
+mod_non_adj<-metacont(n.e = dat$Number.OBSt, mean.e = dat$RichnessXt, sd.e = dat$RichnessSDt, n.c = dat$Number.OBSc, mean.c = dat$RichnessXc, sd.c = dat$RichnessSDc, data = dat, sm = "ROM", title = "Fungal Richness Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = F, level.comb = 0.95)
+
+#Rerun model and remove outliersfind.outliers(Random_Richness_Fungi)
+mod_adj_outs<-find.outliers(mod_adj)
+mod_non_adj_outs<-find.outliers(mod_non_adj)
+
+mod_adj_wo_Outliers<-metacont(n.e = dat$Number.OBSt, mean.e = dat$RichnessXt, sd.e = dat$RichnessSDt, n.c = dat$Number.OBSc, mean.c = dat$RichnessXc, sd.c = dat$RichnessSDc, data = dat, sm = "ROM", title = "Fungal Richness Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = T, level.comb = 0.95, exclude = c(mod_adj_outs$out.study.random))
+summary(mod_adj_wo_Outliers)
+
+mod_non_adj_wo_Outliers<-metacont(n.e = dat$Number.OBSt, mean.e = dat$RichnessXt, sd.e = dat$RichnessSDt, n.c = dat$Number.OBSc, mean.c = dat$RichnessXc, sd.c = dat$RichnessSDc, data = dat, sm = "ROM", title = "Fungal Richness Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = F, level.comb = 0.95, exclude =c(mod_adj_outs$out.study.random))
+summary(mod_non_adj_wo_Outliers)
+
+see_plots<-InfluenceAnalysis(x = mod_adj_wo_Outliers, random = TRUE, return.separate.plots = T)
+
+#plots funnel plot of symetry to assess publication bias
+funnel(mod_adj_wo_Outliers,xlab = "Hedges' g")
+#tests for assymetry and can be used to determine if there is significant publication bias. 
+eggers.test(x = mod_adj_wo_Outliers)
+
+#only necessary if eggers is signifcant
+#trimfill(mod_adj_wo_Outliers)
+```
+
+Non-N-fixing terrestrial plants.
+```{r}
+dat<-non_n_fixing_fungi
+which(is.na(dat$RichnessXt))
+#fungi_wo_na<-dat[-(which(is.na(dat$RichnessXt))),]
+#dat<-fungi_wo_na
+
+#Random Effects model for entire fungal datset for Richness diversity
+mod_adj<-metacont(n.e = dat$Number.OBSt, mean.e = dat$RichnessXt, sd.e = dat$RichnessSDt, n.c = dat$Number.OBSc, mean.c = dat$RichnessXc, sd.c = dat$RichnessSDc, data = dat, sm = "ROM", title = "Fungal Richness Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = T, level.comb = 0.95)
+
+mod_non_adj<-metacont(n.e = dat$Number.OBSt, mean.e = dat$RichnessXt, sd.e = dat$RichnessSDt, n.c = dat$Number.OBSc, mean.c = dat$RichnessXc, sd.c = dat$RichnessSDc, data = dat, sm = "ROM", title = "Fungal Richness Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = F, level.comb = 0.95)
+
+#Rerun model and remove outliersfind.outliers(Random_Richness_Fungi)
+mod_adj_outs<-find.outliers(mod_adj)
+mod_non_adj_outs<-find.outliers(mod_non_adj)
+
+mod_adj_wo_Outliers<-metacont(n.e = dat$Number.OBSt, mean.e = dat$RichnessXt, sd.e = dat$RichnessSDt, n.c = dat$Number.OBSc, mean.c = dat$RichnessXc, sd.c = dat$RichnessSDc, data = dat, sm = "ROM", title = "Fungal Richness Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = T, level.comb = 0.95, exclude = c(mod_adj_outs$out.study.random))
+summary(mod_adj_wo_Outliers)
+
+mod_non_adj_wo_Outliers<-metacont(n.e = dat$Number.OBSt, mean.e = dat$RichnessXt, sd.e = dat$RichnessSDt, n.c = dat$Number.OBSc, mean.c = dat$RichnessXc, sd.c = dat$RichnessSDc, data = dat, sm = "ROM", title = "Fungal Richness Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = F, level.comb = 0.95, exclude =c(mod_adj_outs$out.study.random))
+summary(mod_non_adj_wo_Outliers)
+
+see_plots<-InfluenceAnalysis(x = mod_adj_wo_Outliers, random = TRUE, return.separate.plots = T)
+
+#plots funnel plot of symetry to assess publication bias
+funnel(mod_adj_wo_Outliers,xlab = "Hedges' g")
+#tests for assymetry and can be used to determine if there is significant publication bias. 
+eggers.test(x = mod_adj_wo_Outliers)
+
+#only necessary if eggers is signifcant
+#trimfill(mod_adj_wo_Outliers)
+```
+
+```{r}
+summary(subgroup.analysis.mixed.effects(mod_adj_wo_Outliers, subgroups = dat$Soil_Dummy))
+rhizo_fungi<- terrestrial_fungi %>% dplyr::filter(Soil_Dummy == 2)
+bulk_fungi<- terrestrial_fungi %>% dplyr::filter(Soil_Dummy == 1)
+```
+
+Rhizosphere soils
+```{r}
+dat<-rhizo_fungi
+which(is.na(dat$RichnessXt))
+#fungi_wo_na<-dat[-(which(is.na(dat$RichnessXt))),]
+#dat<-fungi_wo_na
+
+#Random Effects model for entire fungal datset for Richness diversity
+mod_adj<-metacont(n.e = dat$Number.OBSt, mean.e = dat$RichnessXt, sd.e = dat$RichnessSDt, n.c = dat$Number.OBSc, mean.c = dat$RichnessXc, sd.c = dat$RichnessSDc, data = dat, sm = "ROM", title = "Fungal Richness Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = T, level.comb = 0.95)
+
+mod_non_adj<-metacont(n.e = dat$Number.OBSt, mean.e = dat$RichnessXt, sd.e = dat$RichnessSDt, n.c = dat$Number.OBSc, mean.c = dat$RichnessXc, sd.c = dat$RichnessSDc, data = dat, sm = "ROM", title = "Fungal Richness Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = F, level.comb = 0.95)
+
+#Rerun model and remove outliersfind.outliers(Random_Richness_Fungi)
+mod_adj_outs<-find.outliers(mod_adj)
+mod_non_adj_outs<-find.outliers(mod_non_adj)
+
+mod_adj_wo_Outliers<-metacont(n.e = dat$Number.OBSt, mean.e = dat$RichnessXt, sd.e = dat$RichnessSDt, n.c = dat$Number.OBSc, mean.c = dat$RichnessXc, sd.c = dat$RichnessSDc, data = dat, sm = "ROM", title = "Fungal Richness Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = T, level.comb = 0.95, exclude = c(mod_adj_outs$out.study.random))
+summary(mod_adj_wo_Outliers)
+
+mod_non_adj_wo_Outliers<-metacont(n.e = dat$Number.OBSt, mean.e = dat$RichnessXt, sd.e = dat$RichnessSDt, n.c = dat$Number.OBSc, mean.c = dat$RichnessXc, sd.c = dat$RichnessSDc, data = dat, sm = "ROM", title = "Fungal Richness Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = F, level.comb = 0.95, exclude =c(mod_adj_outs$out.study.random))
+summary(mod_non_adj_wo_Outliers)
+
+see_plots<-InfluenceAnalysis(x = mod_adj_wo_Outliers, random = TRUE, return.separate.plots = T)
+
+#plots funnel plot of symetry to assess publication bias
+funnel(mod_adj_wo_Outliers,xlab = "Hedges' g")
+#tests for assymetry and can be used to determine if there is significant publication bias. 
+eggers.test(x = mod_adj_wo_Outliers)
+
+#only necessary if eggers is signifcant
+trimfill(mod_adj_wo_Outliers)
+```
+Bulk Soils
+```{r}
+dat<-bulk_fungi
+which(is.na(dat$RichnessXt))
+#fungi_wo_na<-dat[-(which(is.na(dat$RichnessXt))),]
+#dat<-fungi_wo_na
+
+#Random Effects model for entire fungal datset for Richness diversity
+mod_adj<-metacont(n.e = dat$Number.OBSt, mean.e = dat$RichnessXt, sd.e = dat$RichnessSDt, n.c = dat$Number.OBSc, mean.c = dat$RichnessXc, sd.c = dat$RichnessSDc, data = dat, sm = "ROM", title = "Fungal Richness Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = T, level.comb = 0.95)
+
+mod_non_adj<-metacont(n.e = dat$Number.OBSt, mean.e = dat$RichnessXt, sd.e = dat$RichnessSDt, n.c = dat$Number.OBSc, mean.c = dat$RichnessXc, sd.c = dat$RichnessSDc, data = dat, sm = "ROM", title = "Fungal Richness Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = F, level.comb = 0.95)
+
+#Rerun model and remove outliersfind.outliers(Random_Richness_Fungi)
+mod_adj_outs<-find.outliers(mod_adj)
+mod_non_adj_outs<-find.outliers(mod_non_adj)
+
+mod_adj_wo_Outliers<-metacont(n.e = dat$Number.OBSt, mean.e = dat$RichnessXt, sd.e = dat$RichnessSDt, n.c = dat$Number.OBSc, mean.c = dat$RichnessXc, sd.c = dat$RichnessSDc, data = dat, sm = "ROM", title = "Fungal Richness Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = T, level.comb = 0.95, exclude = c(mod_adj_outs$out.study.random))
+summary(mod_adj_wo_Outliers)
+
+mod_non_adj_wo_Outliers<-metacont(n.e = dat$Number.OBSt, mean.e = dat$RichnessXt, sd.e = dat$RichnessSDt, n.c = dat$Number.OBSc, mean.c = dat$RichnessXc, sd.c = dat$RichnessSDc, data = dat, sm = "ROM", title = "Fungal Richness Diversity", warn = F, label.e = "Invaded", label.c = "Uninvaded", prediction = T, comb.fixed = F, comb.random = T, method.tau = "REML", hakn = F, level.comb = 0.95, exclude =c(mod_adj_outs$out.study.random))
+summary(mod_non_adj_wo_Outliers)
+
+see_plots<-InfluenceAnalysis(x = mod_adj_wo_Outliers, random = TRUE, return.separate.plots = T)
+
+#plots funnel plot of symetry to assess publication bias
+funnel(mod_adj_wo_Outliers,xlab = "Hedges' g")
+#tests for assymetry and can be used to determine if there is significant publication bias. 
+eggers.test(x = mod_adj_wo_Outliers)
+
+#only necessary if eggers is signifcant
+trimfill(mod_adj_wo_Outliers)
+```

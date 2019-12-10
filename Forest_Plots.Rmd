@@ -1,0 +1,53 @@
+---
+title: "Forest Plots"
+output: html_notebook
+---
+
+```{r}
+shannon<-read.csv("/Users/gordoncuster/Desktop/Meta_analysis/Wrangled_Data/Forest_Plot_Table_Shannon.csv")
+richness<-read.csv("/Users/gordoncuster/Desktop/Meta_analysis/Wrangled_Data/Forest_Plot_Table_Richness.csv")
+```
+
+```{r}
+own <- fpTxtGp() 
+own$ticks$cex <- 3 #tick labels
+own <- fpTxtGp(label = gpar(fontfamily = "Arial", cex=0.75), ticks = gpar(cex=1), xlab = gpar(cex=1))
+
+xticks <- seq(from = 0.8, to = 1.3, by = .1)
+shannon_fungi_fp <- forestplot(labeltext = as.character(paste(shannon$subgroup, "k=", shannon$number.of.studies..n., "p=", shannon$p.value, sep = " ")), boxsize = 0.25, zero = 1, txt_gp = own, title = "Shannon Diveristy (H`)",
+xlab = "ROM",mean = shannon$mean, lower = shannon$lower, upper = shannon$upper , new_page = TRUE, lty.ci = 2, xticks = xticks,
+clip=c(0.75,1.79), xlog=F, col=fpColors(box="black", line="black", hrz_lines = "black", zero = "black"))
+
+
+xticks <- seq(from = 0.8, to = 1.8, by = .2)
+richness_fungi_fp <- forestplot(labeltext = as.character(paste(richness$subgroup, "k=", richness$number.of.studies..n., "p=", richness$p.value, sep = " ")), boxsize = 0.25, zero = 1, txt_gp = own, title = "Richness", xlab = "ROM",
+mean = richness$mean, lower = richness$lower, upper = richness$upper , new_page = T, lty.ci = 2, xticks = xticks,
+clip=c(0.25,1.79),xlog=F, col=fpColors(box="black", line="black", hrz_lines = "black", zero = "black"))
+
+
+```
+
+##bacterial plots
+```{r}
+shannon<-read.csv("/Users/gordoncuster/Desktop/Meta_analysis/Wrangled_Data/Forest_Plot_Table_Shannonbac.csv")
+richness<-read.csv("/Users/gordoncuster/Desktop/Meta_analysis/Wrangled_Data/Forest_Plot_Table_Richness_bac.csv")
+```
+
+```{r}
+own <- fpTxtGp() 
+own$ticks$cex <- 3 #tick labels
+own <- fpTxtGp(label = gpar(fontfamily = "Arial", cex=0.75), ticks = gpar(cex=1), xlab = gpar(cex=1))
+
+xticks <- seq(from = 0.95, to = 1.07, by = .025)
+shannon_fungi_fp <- forestplot(labeltext = as.character(paste(shannon$subgroup, "k=", shannon$number.of.studies..n., "p=", shannon$p.value, sep = " ")), boxsize = 0.25, zero = 1, txt_gp = own, title = "Shannon Diveristy (H`)",
+xlab = "ROM",mean = shannon$mean, lower = shannon$lower, upper = shannon$upper , new_page = TRUE, lty.ci = 2, xticks = xticks,
+clip=c(0.75,1.79), xlog=F, col=fpColors(box="black", line="black", hrz_lines = "black", zero = "black"))
+
+
+xticks <- seq(from = 0.8, to = 1.3, by = .2)
+richness_fungi_fp <- forestplot(labeltext = as.character(paste(richness$subgroup, "k=", richness$number.of.studies..n., "p=", richness$p.value, sep = " ")), boxsize = 0.25, zero = 1, txt_gp = own, title = "Richness", xlab = "ROM",
+mean = richness$mean, lower = richness$lower, upper = richness$upper , new_page = T, lty.ci = 2, xticks = xticks,
+clip=c(0.25,1.79),xlog=F, col=fpColors(box="black", line="black", hrz_lines = "black", zero = "black"))
+
+```
+
